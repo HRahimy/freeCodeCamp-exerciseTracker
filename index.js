@@ -158,7 +158,19 @@ app.get('/api/users/:_id/logs', (req, res) => {
     return;
   }
 
-  ExerciseModel.find({userid: req.params._id}, (err, data) => {
+  let query = ExerciseModel.find({userid: req.params._id});
+
+  if(req.query.from) {
+    query.gte('date', new Date(req.query.from));
+  }
+  if(req.query.to) {
+    query.lte('date', new Date(req.query.to));
+  }
+  if (req.query.limit) {
+    query.limit(+req.query.limit);
+  }
+
+  query.exec((err, data) => {
     if (err) {
       console.log(err);
       res.json({error: 'error getting logs'});
@@ -175,7 +187,6 @@ app.get('/api/users/:_id/logs', (req, res) => {
           };
         })
       };
-      console.log(dto);
       res.json(dto);
     }
   });
