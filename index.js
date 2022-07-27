@@ -50,6 +50,26 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/views/index.html')
 });
 
+app.post('/api/users', (req, res) => {
+  if (!req.body.username) {
+    res.json({error: 'username required'});
+    return;
+  }
+
+  const newUser = new UserModel({userName: req.body.username});
+  newUser.save((err, data) => {
+    if (err) {
+      console.log(err);
+      res.json({error: 'could not save user'});
+      return;
+    }
+    res.json({
+      username: data.userName,
+      _id: data._id
+    });
+  });
+});
+
 
 const listener = app.listen(process.env.PORT || 3000, () => {
   console.log('Your app is listening on port ' + listener.address().port)
