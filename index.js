@@ -18,17 +18,13 @@ app.use(express.static('public'))
 
 /* MongoDb schema and model definitions */
 const userSchema = new mongoose.Schema({
-  userName: {
+  username: {
     type: String,
     required: true,
   },
 });
 const exerciseSchema = new mongoose.Schema({
   user: userSchema,
-  name: {
-    type: String,
-    required: true
-  },
   description: {
     type: String,
     required: true
@@ -53,7 +49,7 @@ app.get('/', (req, res) => {
 app.route('/api/users')
   .get((req, res) => {
     UserModel.find()
-      .select(['userName', '_id'])
+      .select(['username', '_id'])
       .exec((err, data) => {
         if (err) {
           console.log(err);
@@ -62,7 +58,7 @@ app.route('/api/users')
         }
         const returnData = data.map((e) => {
           return {
-            username: e.userName,
+            username: e.username,
             _id: e._id
           };
         });
@@ -75,7 +71,7 @@ app.route('/api/users')
     return;
   }
 
-  const newUser = new UserModel({userName: req.body.username});
+  const newUser = new UserModel({username: req.body.username});
   newUser.save((err, data) => {
     if (err) {
       console.log(err);
@@ -83,9 +79,72 @@ app.route('/api/users')
       return;
     }
     res.json({
-      username: data.userName,
+      username: data.username,
       _id: data._id
     });
+  });
+});
+
+app.post('/api/users/:_id/exercises', (req, res) => {
+  if (!req.params._id) {
+    res.json({error: '_id is required'});
+    return;
+  }
+  if (!req.body.description) {
+    res.json({error: 'description is required'});
+    return;
+  }
+  if (!req.body.duration) {
+    res.json({error: 'duration is required'});
+  }
+  let date;
+  if (!req.body.date) {
+    date = new Date(Date.now());
+  } else {
+    // Solution to convert unix timestamp into Date object adapted from:
+    // https://stackoverflow.com/a/847196/5472560
+    date = new Date(isNaN(req.params.date) ?req.params.date : +req.params.date);
+  
+    // Solution to check if date is valid adapted from:
+    // https://stackoverflow.com/a/10589791/5472560
+    if (!(date instanceof Date && !isNaN(date.valueOf()))) {
+      res.json({
+        error: "Invalid Date"
+      });
+      return;
+    }
+  }
+
+  UserModel.findById(req.params._id, (findUserErr, dbUser) => {
+    if (findUserErr) {
+      console.log(findUserErr);
+      res.json({error: 'user not found'});
+    } else {
+      console.log({dbUser: dbUser});
+      const exercise = new ExerciseModel({
+        user: dbUser,
+        description: req.body.description,
+        durationMinutes: req.body.duration,
+        date: date
+      });
+      console.log({exercise: exercise});
+      exercise.save((err, data) => {
+        if (err) {
+          console.log(err);
+          res.json({error: 'could not save exercise'});
+        } else {
+          const returnExercise = {
+            username: data.user.username,
+            _id: data.user._id,
+            description: data.description,
+            duration: data.durationMinutes,
+            date: data.date.toDateString(),
+          };
+          console.log({returnExercise: returnExercise});
+          res.json(returnExercise);
+        }
+      });
+    }
   });
 });
 
