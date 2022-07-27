@@ -50,7 +50,26 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/views/index.html')
 });
 
-app.post('/api/users', (req, res) => {
+app.route('/api/users')
+  .get((req, res) => {
+    UserModel.find()
+      .select(['userName', '_id'])
+      .exec((err, data) => {
+        if (err) {
+          console.log(err);
+          res.json({error: 'unexpected error getting users'});
+          return;
+        }
+        const returnData = data.map((e) => {
+          return {
+            username: e.userName,
+            _id: e._id
+          };
+        });
+        res.json(returnData);
+    });
+  })
+  .post((req, res) => {
   if (!req.body.username) {
     res.json({error: 'username required'});
     return;
