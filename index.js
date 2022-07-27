@@ -117,17 +117,14 @@ app.post('/api/users/:_id/exercises', (req, res) => {
 
   UserModel.findById(req.params._id, (findUserErr, dbUser) => {
     if (findUserErr) {
-      console.log(findUserErr);
       res.json({error: 'user not found'});
     } else {
-      console.log({dbUser: dbUser});
       const exercise = new ExerciseModel({
         user: dbUser,
         description: req.body.description,
         durationMinutes: req.body.duration,
         date: date
       });
-      console.log({exercise: exercise});
       exercise.save((err, data) => {
         if (err) {
           console.log(err);
@@ -140,7 +137,6 @@ app.post('/api/users/:_id/exercises', (req, res) => {
             duration: data.durationMinutes,
             date: data.date.toDateString(),
           };
-          console.log({returnExercise: returnExercise});
           res.json(returnExercise);
         }
       });
