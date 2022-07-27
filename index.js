@@ -24,7 +24,14 @@ const userSchema = new mongoose.Schema({
   },
 });
 const exerciseSchema = new mongoose.Schema({
-  user: userSchema,
+  username: {
+    type: String,
+    required: true
+  },
+  userid: {
+    type: mongoose.ObjectId,
+    required: true
+  },
   description: {
     type: String,
     required: true
@@ -120,7 +127,8 @@ app.post('/api/users/:_id/exercises', (req, res) => {
       res.json({error: 'user not found'});
     } else {
       const exercise = new ExerciseModel({
-        user: dbUser,
+        username: dbUser.username,
+        userid: dbUser._id,
         description: req.body.description,
         durationMinutes: req.body.duration,
         date: date
@@ -131,8 +139,8 @@ app.post('/api/users/:_id/exercises', (req, res) => {
           res.json({error: 'could not save exercise'});
         } else {
           const returnExercise = {
-            username: data.user.username,
-            _id: data.user._id,
+            username: data.username,
+            _id: data.userid,
             description: data.description,
             duration: data.durationMinutes,
             date: data.date.toDateString(),
@@ -140,6 +148,35 @@ app.post('/api/users/:_id/exercises', (req, res) => {
           res.json(returnExercise);
         }
       });
+    }
+  });
+});
+
+app.get('/api/users/:_id/logs', (req, res) => {
+  if(!req.params._id) {
+    res.json({error: '_id is required'});
+    return;
+  }
+
+  ExerciseModel.find({userid: req.params._id}, (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json({error: 'error getting logs'});
+    } else {
+      const dto = {
+        username: data[0].username,
+        _id: data[0].userid,
+        count: data.length,
+        log: data.map((ex) => {
+          return {
+            description: ex.description,
+            duration: ex.durationMinutes,
+            date: ex.date.toDateString()
+          };
+        })
+      };
+      console.log(dto);
+      res.json(dto);
     }
   });
 });
