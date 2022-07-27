@@ -103,7 +103,7 @@ app.post('/api/users/:_id/exercises', (req, res) => {
   } else {
     // Solution to convert unix timestamp into Date object adapted from:
     // https://stackoverflow.com/a/847196/5472560
-    date = new Date(isNaN(req.params.date) ?req.params.date : +req.params.date);
+    date = new Date(isNaN(req.body.date) ?req.body.date : +req.body.date);
   
     // Solution to check if date is valid adapted from:
     // https://stackoverflow.com/a/10589791/5472560
